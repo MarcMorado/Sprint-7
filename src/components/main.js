@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Popup from "reactjs-popup";
-import { Info } from "./styled";
+import { Info, DivLista, DivOrdre, BotOrdre } from "./styled";
 import { Button } from "./styled";
 import { InputSt } from "./styled";
 import { DivSt } from "./styled";
@@ -10,6 +10,7 @@ import { MainDiv } from "./styled";
 import "../style/style.css";
 let price = 0;
 const pres = [];
+let array = [];
 export default function Prices() {
   //! Getting localStorage
   const storedWebCheck = localStorage.getItem("webChecked");
@@ -17,9 +18,10 @@ export default function Prices() {
   const storedAdsCheck = localStorage.getItem("gAdsChecked");
   const storedPaginas = localStorage.getItem("nPaginas");
   const storedIdiomas = localStorage.getItem("nIdiomas");
+  // const storedPresup = localStorage.getItem("Presupuestos");
   let countP = Number(storedPaginas || 1);
   let countI = Number(storedIdiomas || 1);
-
+  
   //?Checks
   const [webCheck, webSetIsChecked] = useState(false);
   const [seoCheck, seoSetIsChecked] = useState(false);
@@ -99,6 +101,7 @@ export default function Prices() {
   const [message, setMessage] = useState({
     nombre: "",
     nPres: "",
+    buscar:''
   });
   const saveChanges = (event) => {
     setMessage({
@@ -106,14 +109,18 @@ export default function Prices() {
       [event.target.name]: event.target.value,
     });
   };
- 
+  //?para que se actualize el cambio
+  const [isChanging, setIsChanging] = useState(false);
+
+  //*GUARDA LA LISTA
   const save = () => {
-    
+    setIsTog1(isTog, true);
+    setIsChanging(!isChanging);
     let preu =
       (webCheck && price + 500 + datos.nPaginas * datos.nIdiomas * 30) +
       (seoCheck && price + 300) +
       (gAdsCheck && price + 200);
-    let date = new Date().toString();
+    let date = new Date().toISOString();
     pres.push({
       NomClient: message.nombre,
       NomPres: message.nPres,
@@ -125,8 +132,33 @@ export default function Prices() {
       precio: preu,
       date: date,
     });
+    array = [...pres]
+    localStorage.setItem("Presupuestos", JSON.stringify(pres))
   };
 
+  const orderAlph = () => {
+    const alph = [...pres];
+    alph.sort((a,b)=>(a.NomPres>b.NomPres ? 1: -1));
+    array = [...alph];
+    setIsChanging(!isChanging);
+  }
+  
+  const orderDate = () => {
+    const orDate = [...pres];
+    orDate.sort((a,b)=>(a.date>b.date ? 1: -1));
+    array = [...orDate];
+    setIsChanging(!isChanging);
+  }
+
+  const orderReset = () => {
+    array = [...pres];
+    setIsChanging(!isChanging);
+  }
+
+  const search = () => {
+    array = pres.filter(item => item.NomPres === message.buscar)
+    setIsChanging(!isChanging);
+  }
   return (
     <MainDiv>
       <div>
@@ -228,20 +260,26 @@ export default function Prices() {
       <SideBar2>
         <SideBar>
           <h2>Pressupost</h2>
+          <DivOrdre>
+            <BotOrdre onClick={orderAlph}>Alfabèticament</BotOrdre>
+            <BotOrdre onClick={orderDate}>Per data</BotOrdre>
+            <BotOrdre onClick={orderReset}>Reinicialitzar l'ordre</BotOrdre>
+          </DivOrdre>
+          <input type='text' name='buscar' onChange={saveChanges} placeholder="buscar pressupost"></input>
+          <button onClick={search}>Buscar</button>
           {isTog1 &&
-            pres.map((item) => {
-              console.log(pres);
+            array.map((item, index) => {
               return (
-                <div key={item.date}>
-                  Nom: {item.NomClient}
+                <DivLista key={index}>
+                  <strong>Nom client:</strong> {item.NomClient}
                   <br />
-                  Pressupost: {item.NomPres}
+                  <strong>Nom pressupost:</strong> {item.NomPres}
                   <br />
-                  preu: {item.precio}
+                  <strong>Preu:</strong> {item.precio}€
                   <br />
-                  Data: {item.date}
+                  <strong>Data:</strong> {item.date}
                   <br />
-                </div>
+                </DivLista>
               );
             })}
         </SideBar>
