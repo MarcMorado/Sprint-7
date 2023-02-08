@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import useUrlState from "@ahooksjs/use-url-state";
 import Popup from "reactjs-popup";
 import { Info, DivLista, DivOrdre, BotOrdre } from "./styled";
 import { Button } from "./styled";
@@ -19,14 +20,25 @@ export default function Prices() {
   const storedPaginas = localStorage.getItem("nPaginas");
   const storedIdiomas = localStorage.getItem("nIdiomas");
   // const storedPresup = localStorage.getItem("Presupuestos");
-  let countP = Number(storedPaginas || 1);
-  let countI = Number(storedIdiomas || 1);
-  
+
+  //* URL
+  const [webURL, setWebURL] = useUrlState({ web: "false" });
+  const [seoURL, setseoURL] = useUrlState({ seo: "false" });
+  const [adsURL, setadsURL] = useUrlState({ ads: "false" });
+  const [countPURL, setcountPURL] = useUrlState({ paginas: "0" });
+  const [countIURL, setcountIURL] = useUrlState({ idiomas: "0" });
+
+  let countP = Number(countPURL.paginas || storedPaginas || 1);
+  let countI = Number(countIURL.idiomas || storedIdiomas || 1);
+
   //?Checks
   const [webCheck, webSetIsChecked] = useState(false);
   const [seoCheck, seoSetIsChecked] = useState(false);
   const [gAdsCheck, gAdsSetIsChecked] = useState(false);
   useState(() => {
+    if (webURL.web) webSetIsChecked(true);
+    if (seoURL.web) seoSetIsChecked(true);
+    if (adsURL.web) gAdsSetIsChecked(true);
     if (storedWebCheck !== null) webSetIsChecked(JSON.parse(storedWebCheck));
     if (storedSeoCheck !== null) seoSetIsChecked(JSON.parse(storedSeoCheck));
     if (storedAdsCheck !== null) gAdsSetIsChecked(JSON.parse(storedAdsCheck));
@@ -36,23 +48,27 @@ export default function Prices() {
     !webCheck
       ? localStorage.setItem("webChecked", true)
       : localStorage.setItem("webChecked", false);
+    !webCheck ? setWebURL({ web: "true" }) : setWebURL({ web: "false" });
   };
   const seoChange = () => {
     seoSetIsChecked(!seoCheck);
     !seoCheck
       ? localStorage.setItem("seoChecked", true)
       : localStorage.setItem("seoChecked", false);
+    !seoCheck ? setseoURL({ seo: "true" }) : setseoURL({ seo: "false" });
   };
   const gAdsChange = () => {
     gAdsSetIsChecked(!gAdsCheck);
     !gAdsCheck
       ? localStorage.setItem("gAdsChecked", true)
       : localStorage.setItem("gAdsChecked", false);
+    !gAdsCheck ? setadsURL({ ads: "true" }) : setadsURL({ ads: "false" });
   };
 
   //* FORMULARIO
   const [isToggled, setIsToggled] = useState(false);
   useState(() => {
+    if (webURL.web) setIsToggled(true);
     if (storedWebCheck !== null) setIsToggled(JSON.parse(storedWebCheck));
   });
   const [datos, setDatos] = useState({
@@ -71,6 +87,9 @@ export default function Prices() {
       ...datos,
       [event.target.name]: event.target.value,
     });
+    event.target.name === "nPaginas"
+      ? setcountPURL({ paginas: countP })
+      : setcountIURL({ idiomas: countI });
   };
   const sumar = (event) => {
     event.target.name === "nPaginas"
@@ -80,6 +99,9 @@ export default function Prices() {
       ...datos,
       [event.target.name]: event.target.name === "nPaginas" ? countP : countI,
     });
+    event.target.name === "nPaginas"
+      ? setcountPURL({ paginas: countP })
+      : setcountIURL({ idiomas: countI });
   };
   const restar = (event) => {
     event.target.name === "nPaginas"
@@ -93,6 +115,9 @@ export default function Prices() {
       ...datos,
       [event.target.name]: event.target.name === "nPaginas" ? countP : countI,
     });
+    event.target.name === "nPaginas"
+      ? setcountPURL({ paginas: countP })
+      : setcountIURL({ idiomas: countI });
   };
 
   //* GUARDAR PRESUPUESTO
@@ -101,7 +126,7 @@ export default function Prices() {
   const [message, setMessage] = useState({
     nombre: "",
     nPres: "",
-    buscar:''
+    buscar: "",
   });
   const saveChanges = (event) => {
     setMessage({
@@ -132,33 +157,33 @@ export default function Prices() {
       precio: preu,
       date: date,
     });
-    array = [...pres]
-    localStorage.setItem("Presupuestos", JSON.stringify(pres))
+    array = [...pres];
+    localStorage.setItem("Presupuestos", JSON.stringify(pres));
   };
 
   const orderAlph = () => {
     const alph = [...pres];
-    alph.sort((a,b)=>(a.NomPres>b.NomPres ? 1: -1));
+    alph.sort((a, b) => (a.NomPres > b.NomPres ? 1 : -1));
     array = [...alph];
     setIsChanging(!isChanging);
-  }
-  
+  };
+
   const orderDate = () => {
     const orDate = [...pres];
-    orDate.sort((a,b)=>(a.date>b.date ? 1: -1));
+    orDate.sort((a, b) => (a.date > b.date ? 1 : -1));
     array = [...orDate];
     setIsChanging(!isChanging);
-  }
+  };
 
   const orderReset = () => {
     array = [...pres];
     setIsChanging(!isChanging);
-  }
+  };
 
   const search = () => {
-    array = pres.filter(item => item.NomPres === message.buscar)
+    array = pres.filter((item) => item.NomPres === message.buscar);
     setIsChanging(!isChanging);
-  }
+  };
   return (
     <MainDiv>
       <div>
@@ -265,7 +290,12 @@ export default function Prices() {
             <BotOrdre onClick={orderDate}>Per data</BotOrdre>
             <BotOrdre onClick={orderReset}>Reinicialitzar l'ordre</BotOrdre>
           </DivOrdre>
-          <input type='text' name='buscar' onChange={saveChanges} placeholder="buscar pressupost"></input>
+          <input
+            type="text"
+            name="buscar"
+            onChange={saveChanges}
+            placeholder="buscar pressupost"
+          ></input>
           <button onClick={search}>Buscar</button>
           {isTog1 &&
             array.map((item, index) => {
